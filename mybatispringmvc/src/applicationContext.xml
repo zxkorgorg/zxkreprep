@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>                        
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  
+                        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+                        http://www.springframework.org/schema/context 
+                        http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+                        http://www.springframework.org/schema/mvc  
+                        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+                        http://www.springframework.org/schema/aop 
+                        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+                        http://www.springframework.org/schema/tx 
+                        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+                        http://www.springframework.org/schema/cache
+                        http://www.springframework.org/schema/cache/spring-cache-4.0.xsd">                        
+    
+    <!-- 自动扫描该包，使SpringMVC认为包下用了@controller注解的类是控制器 -->
+	<context:component-scan base-package="com.oracle"/>
+	<!-- 默认的注解映射的支持 -->  
+	<mvc:annotation-driven /> 
+	
+	
+	<!-- 静态资源(js/image/css)的访问,两个星号表示该目录下子目录递归 -->
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+	
+	<!-- 定义跳转的文件的前后缀 ，视图模式配置-->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+		<property name="prefix" value="/WEB-INF/pages/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+	
+	<!-- 配置文件上传，如果没有使用文件上传可以不用配置，当然如果不配，那么配置文件中也不必引入上传组件包 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">  
+        <!-- 默认编码 -->
+        <property name="defaultEncoding" value="gb2312" />  
+        <!-- 文件大小最大值 -->
+        <property name="maxUploadSize" value="10485760000" />
+    </bean> 
+    
+    
+
+    
+    
+    <!-- spring mvc 整合 mybatis -->
+    <!-- 事务管理-->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+   <!-- 用来启用基于注解的事务 -->
+   <tx:annotation-driven transaction-manager="txManager"/>
+   
+	<!-- 引入配置文件 -->
+	<bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:jdbc.properties" />
+	</bean>
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${driver}" />
+		<property name="url" value="${url}" />
+		<property name="username" value="${username}" />
+		<property name="password" value="${password}" />
+		<!-- 初始化连接大小 -->
+		<property name="initialSize" value="${initialSize}"></property>
+		<!-- 连接池最大数量 -->
+		<property name="maxActive" value="${maxActive}"></property>
+		<!-- 连接池最大空闲 -->
+		<property name="maxIdle" value="${maxIdle}"></property>
+		<!-- 连接池最小空闲 -->
+		<property name="minIdle" value="${minIdle}"></property>
+		<!-- 获取连接最大等待时间 -->
+		<property name="maxWait" value="${maxWait}"></property>
+	</bean>
+
+	<!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 自动扫描mapping.xml文件 -->
+		<property name="mapperLocations" value="classpath:com/oracle/mapping/*.xml"/>
+		<!-- 读取配置 -->
+        <!--<property name="configLocation" value="classpath:mybatis-config.xml" />-->
+	</bean>
+
+	<!-- DAO接口所在包名，Spring会自动查找其下自动扫描将Mapper接口生成代理注入到Spring-->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.oracle.dao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+	
+	<!-- 单独的springmvc使用ehcache 做以下配置， 整合mybatis不需要配置，使用mybatis的配置,参考UserMapper.xml文件-->
+
+	
+<!-- 	<cache:annotation-driven cache-manager="cacheManager"/>
+   <bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" 
+   p:cache-manager-ref="ehcacheManager" scope="prototype"/>
+   <bean id="ehcacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" 
+   p:config-location="classpath:ehcache.xml" scope="prototype"/>  --> 
+	
+
+  
+</beans>
